@@ -36,7 +36,7 @@ namespace GCBenchmarkCLR {
 
 
         // Populate the tree. Allocates lots of objects for the GC to waste time on.
-        public Tree createLeftTree(int height, int[] payload, Stack<Tree> stack) {
+        public static Tree createLeftTree(int height, int[] payload, Stack<Tree> stack) {
             if (height == 0) return null;
 
             var newArr = new int[4];

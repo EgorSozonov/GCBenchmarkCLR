@@ -9,12 +9,12 @@ namespace GCBenchmarkCLR {
 
     class Program {
         static void Main(string[] args) {
-            run(20, "GC", runWithGC);
+            run(25, "GC", runWithGC);
             Console.ReadKey();
         }
 
         public static void run(int height, string designator, Func<int, DateTime, int> coreFun) {
-            Console.WriteLine("Processing tree with $designator...");
+            Console.WriteLine($"Processing tree with {designator}...");
             var timeStart = DateTime.Now;
 
             var result = coreFun(height, timeStart);
