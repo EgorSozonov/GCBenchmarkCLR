@@ -12,9 +12,10 @@ namespace GCBenchmarkCLR {
 
         public WithGC(int _height) {
             height = _height;
+            theTree = createTree(height, new[] { 1, 2, -1, -1 });
         }
 
-        Tree createTree(int[] payload) {
+        public static Tree createTree(int height, int[] payload) {
             if (height <= 0) return null;
 
             var stack = new Stack<Tree>();

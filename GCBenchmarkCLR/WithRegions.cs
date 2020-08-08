@@ -16,6 +16,4 @@ namespace GCBenchmarkCLR {
             return -1;
         }
     }
-
-
 }
