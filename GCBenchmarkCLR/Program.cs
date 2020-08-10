@@ -9,7 +9,7 @@ namespace GCBenchmarkCLR {
 
     class Program {
         static void Main(string[] args) {
-            run(26, "Reg", runWithRegions);
+            run(25, "Reg", runWithRegions);
             Console.ReadKey();
         }
 

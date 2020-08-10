@@ -11,8 +11,10 @@ namespace GCBenchmarkCLR {
         public const int SIZE_PAYLOAD = 4;
         public const int SIZE_REGION = ELTS_IN_REGION;
         List<Node[]> regions;
-        int currRegion;
+        int indCurrRegion;
+        Node[] currRegion;
         int indFree;
+
         public int sum;
 
         public WithRegions(int _height, DateTime tStart) {
@@ -24,7 +26,8 @@ namespace GCBenchmarkCLR {
             }
             Console.WriteLine($"Time for region alloc = {(DateTime.Now - tStart).TotalMilliseconds} ms");
 
-            currRegion = 0;
+            indCurrRegion = 0;
+            currRegion = regions[0];
             indFree = 0;
 
             createTree(1, 2, -1, -1);
@@ -107,23 +110,40 @@ namespace GCBenchmarkCLR {
 
         public int allocateNode(int _a, int _b, int _c, int _d) {
             if (indFree == SIZE_REGION) {
-                ++currRegion;
+                ++indCurrRegion;
                 indFree = 0;
-                if (currRegion == regions.Count) {
+                if (indCurrRegion == regions.Count) {
                     regions.Add(new Node[SIZE_REGION]);
                 }
+                currRegion = regions[indCurrRegion];
             }
 
-            var region = regions[currRegion];
-            var result = currRegion * SIZE_REGION + indFree;
-            region[indFree].left = -1;
-            region[indFree].right = -1;
-            region[indFree].a = _a;
-            region[indFree].b = _b;
-            region[indFree].c = _c;
-            region[indFree].d = _d;
+            var nd = currRegion[indFree];
+            //currRegion[indFree].left = -1;
+            //currRegion[indFree].right = -1;
+            //currRegion[indFree].a = _a;
+            //currRegion[indFree].b = _b;
+            //currRegion[indFree].c = _c;
+            //currRegion[indFree].d = _d;
+            //nd.left = -1;
+            //nd.right = -1;
+            //nd.a = _a;
+            //nd.b = _b;
+            //nd.c = _c;
+            //nd.d = _d;
+            //nd.left = -1;
+            foo(ref currRegion[indFree], _a, _b, _c, _d);
             ++indFree;
-            return result;
+            return indCurrRegion * SIZE_REGION + indFree - 1;
+        }
+
+        public static void foo(ref Node nd, int _a, int _b, int _c, int _d) {
+            nd.left = -1;
+            nd.right = -1;
+            nd.a = _a;
+            nd.b = _b;
+            nd.c = _c;
+            nd.d = _d;
         }
 
         public Loc toLoc(int ind) {
@@ -141,7 +161,7 @@ namespace GCBenchmarkCLR {
             public int d;
         }
 
-        public class Loc {
+        public sealed class Loc {
             public Node[] arr;
             public int ind;
         }
