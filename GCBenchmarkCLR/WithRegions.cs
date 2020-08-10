@@ -98,11 +98,11 @@ namespace GCBenchmarkCLR {
             var currLeft = root.arr[root.ind].left;
             while (currLeft > -1) {
                 var currNode = toLoc(currLeft);
-
-                sum += currNode.arr[root.ind].a;
-                sum += currNode.arr[root.ind].b;
-                sum += currNode.arr[root.ind].c;
-                sum += currNode.arr[root.ind].d;
+                var nd = currNode.arr[root.ind];
+                sum += nd.a;
+                sum += nd.b;
+                sum += nd.c;
+                sum += nd.d;
                 stack.Push(currNode);
                 currLeft = currNode.arr[currNode.ind].left;
             }
@@ -117,27 +117,12 @@ namespace GCBenchmarkCLR {
                 }
                 currRegion = regions[indCurrRegion];
             }
-
-            var nd = currRegion[indFree];
-            //currRegion[indFree].left = -1;
-            //currRegion[indFree].right = -1;
-            //currRegion[indFree].a = _a;
-            //currRegion[indFree].b = _b;
-            //currRegion[indFree].c = _c;
-            //currRegion[indFree].d = _d;
-            //nd.left = -1;
-            //nd.right = -1;
-            //nd.a = _a;
-            //nd.b = _b;
-            //nd.c = _c;
-            //nd.d = _d;
-            //nd.left = -1;
-            foo(ref currRegion[indFree], _a, _b, _c, _d);
+            initNode(ref currRegion[indFree], _a, _b, _c, _d);
             ++indFree;
             return indCurrRegion * SIZE_REGION + indFree - 1;
         }
 
-        public static void foo(ref Node nd, int _a, int _b, int _c, int _d) {
+        public static void initNode(ref Node nd, int _a, int _b, int _c, int _d) {
             nd.left = -1;
             nd.right = -1;
             nd.a = _a;
