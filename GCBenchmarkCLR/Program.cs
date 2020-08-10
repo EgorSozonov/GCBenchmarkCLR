@@ -9,7 +9,7 @@ namespace GCBenchmarkCLR {
 
     class Program {
         static void Main(string[] args) {
-            run(25, "GC", runWithGC);
+            run(26, "Reg", runWithRegions);
             Console.ReadKey();
         }
 
@@ -32,18 +32,18 @@ namespace GCBenchmarkCLR {
 
             var memory = GC.GetTotalMemory(false);
             Console.WriteLine($"Used memory = {memory / 1024L / 1024L} MB");
-            Console.WriteLine($"Time for alloc = {(DateTime.Now - tStart).TotalMilliseconds} s");
+            Console.WriteLine($"Time for alloc = {(DateTime.Now - tStart).TotalMilliseconds} ms");
 
             return withGC.processTree();
         }
 
 
         public static int runWithRegions(int height, DateTime tStart) {
-            var withRegion = new WithRegions(height);
+            var withRegion = new WithRegions(height, tStart);
 
             var memory = GC.GetTotalMemory(false);
             Console.WriteLine($"Used memory = {memory / 1024L / 1024L} MB");
-            Console.WriteLine($"Time for alloc = {(DateTime.Now - tStart).TotalMilliseconds} s");
+            Console.WriteLine($"Time for alloc = {(DateTime.Now - tStart).TotalMilliseconds} ms");
 
             return withRegion.processTree();
 
