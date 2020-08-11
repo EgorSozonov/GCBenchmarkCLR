@@ -41,8 +41,8 @@ namespace GCBenchmarkCLR {
         public static int runWithRegions(int height, DateTime tStart) {
             var withRegion = new WithRegions(height, tStart);
 
-            var memory = GC.GetTotalMemory(false);
-            Console.WriteLine($"Used memory = {memory / 1024L / 1024L} MB");
+            //var memory = GC.GetTotalMemory(false);
+            //Console.WriteLine($"Used memory = {memory / 1024L / 1024L} MB");
             Console.WriteLine($"Time for alloc = {(DateTime.Now - tStart).TotalMilliseconds} ms");
 
             return withRegion.processTree();

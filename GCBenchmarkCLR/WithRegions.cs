@@ -36,21 +36,21 @@ namespace GCBenchmarkCLR {
 
         public void createTree(int _a, int _b, int _c, int _d) {
             if (height <= 0) return;
-            var stack = new Stack<Loc>();
+            var stack = new Stack<Loc>(height);
             var wholeTree = createLeftTree(height, _a, _b, _c, _d, stack);
-            while (stack.Any()) {
+            while (stack.Count > 0) {
                 var bottomElement = stack.Peek();
-                if (bottomElement.arr[bottomElement.ind].right > -1 || stack.Count() == height) {
+                if (bottomElement.arr[bottomElement.ind].right > -1 || stack.Count == height) {
                     stack.Pop();
-                    while (stack.Any()) {
+                    while (stack.Count > 0) {
                         bottomElement = stack.Peek();
                         if (bottomElement.arr[bottomElement.ind].right == -1) break;
                         stack.Pop();
                     }
                 }
-                if (stack.Any()) {
+                if (stack.Count > 0) {
                     bottomElement = stack.Peek();
-                    bottomElement.arr[bottomElement.ind].right = createLeftTree(height - stack.Count(), _a, _b, _c, _d, stack);
+                    bottomElement.arr[bottomElement.ind].right = createLeftTree(height - stack.Count, _a, _b, _c, _d, stack);
                 }
             }
         }
@@ -78,7 +78,7 @@ namespace GCBenchmarkCLR {
             } else {
                 var stack = new Stack<Loc>();
                 processLeftTree(toLoc(0), stack);
-                while (stack.Any()) {
+                while (stack.Count > 0) {
                     var bottomElem = stack.Pop();
                     var indRight = bottomElem.arr[bottomElem.ind].right;
                     if (indRight > -1) processLeftTree(toLoc(indRight), stack);
