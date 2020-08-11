@@ -50,7 +50,10 @@ namespace GCBenchmarkCLR {
                 }
                 if (stack.Count > 0) {
                     bottomElement = stack.Peek();
-                    bottomElement.arr[bottomElement.ind].right = createLeftTree(height - stack.Count, _a, _b, _c, _d, stack);
+                    //var nd = bottomElement.arr[bottomElement.ind];
+                    int newH = height - stack.Count;
+                    ref Node nd = ref bottomElement.arr[bottomElement.ind];
+                    nd.right = createLeftTree(newH, _a, _b, _c, _d, stack);
                 }
             }
         }
@@ -76,7 +79,7 @@ namespace GCBenchmarkCLR {
                 Console.WriteLine("Oh noes, the tree is null!");
                 return -1;
             } else {
-                var stack = new Stack<Loc>();
+                var stack = new Stack<Loc>(height);
                 processLeftTree(toLoc(0), stack);
                 while (stack.Count > 0) {
                     var bottomElem = stack.Pop();
@@ -89,16 +92,16 @@ namespace GCBenchmarkCLR {
 
         public void processLeftTree(Loc root, Stack<Loc> stack) {
             stack.Push(root);
-
-            sum += root.arr[root.ind].a;
-            sum += root.arr[root.ind].b;
-            sum += root.arr[root.ind].c;
-            sum += root.arr[root.ind].d;
+            ref Node rootN = ref root.arr[root.ind];
+            sum += rootN.a;
+            sum += rootN.b;
+            sum += rootN.c;
+            sum += rootN.d;
 
             var currLeft = root.arr[root.ind].left;
             while (currLeft > -1) {
                 var currNode = toLoc(currLeft);
-                var nd = currNode.arr[root.ind];
+                ref Node nd = ref currNode.arr[root.ind];
                 sum += nd.a;
                 sum += nd.b;
                 sum += nd.c;
@@ -144,6 +147,14 @@ namespace GCBenchmarkCLR {
             public int b;
             public int c;
             public int d;
+
+            public void setLeft(int newVal) {
+                left = newVal;
+            }
+
+            public void setRight(int newVal) {
+                right = newVal;
+            }
         }
 
         public sealed class Loc {
