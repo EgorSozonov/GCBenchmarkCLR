@@ -20,15 +20,15 @@ namespace GCBenchmarkCLR {
 
             var stack = new Stack<Tree>();
             var wholeTree = createLeftTree(height, payload, stack);
-            while (stack.Any()) {
+            while (stack.Count > 0) {
                 var bottomElement = stack.Peek();
-                if (bottomElement.right != null || stack.Count() == height) {
+                if (bottomElement.right != null || stack.Count == height) {
                     stack.Pop();
-                    while (stack.Any() && stack.Peek().right != null) stack.Pop();
+                    while (stack.Count > 0 && stack.Peek().right != null) stack.Pop();
                 }
-                if (stack.Any() && stack.Count() < height) {
+                if (stack.Count > 0 && stack.Count < height) {
                     bottomElement = stack.Peek();
-                    bottomElement.right = createLeftTree(height - stack.Count(), payload, stack);
+                    bottomElement.right = createLeftTree(height - stack.Count, payload, stack);
                 }
             }
             return wholeTree;
@@ -63,7 +63,7 @@ namespace GCBenchmarkCLR {
             } else {
                 var stack = new Stack<Tree>();
                 processLeftTree(theTree, stack);
-                while (stack.Any()) {
+                while (stack.Count > 0) {
                     var bottomElem = stack.Pop().right;
                     if (bottomElem != null) processLeftTree(bottomElem, stack);
                 }

@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace GCBenchmarkCLR {
-    public class WithRegions {
+    public class WithSmartRegions {
         public int height;
         public const int ELTS_IN_REGION = 600000;
         public const int SIZE_PAYLOAD = 4;
@@ -17,7 +17,7 @@ namespace GCBenchmarkCLR {
 
         public int sum;
 
-        public WithRegions(int _height, DateTime tStart) {
+        public WithSmartRegions(int _height, DateTime tStart) {
             height = _height;
             var numRegions = (int)(Math.Pow(2.0, (double)this.height) - 1) / ELTS_IN_REGION + 1;
             regions = new List<Node[]>(numRegions);
@@ -90,14 +90,19 @@ namespace GCBenchmarkCLR {
             return sum;
         }
 
-        public void processLeftTree(Loc root, Stack<Loc> stack) {
-            stack.Push(root);
-            ref Node rootN = ref root.arr[root.ind];
+
+        public void processLeftTree(Node[] arr, int indRoot, Stack<Loc> stack) {
+            stack.Push(new Loc() { arr = arr, ind = indRoot });
+            ref Node rootN = ref arr[indRoot];
             sum += rootN.a;
             sum += rootN.b;
             sum += rootN.c;
             sum += rootN.d;
 
+            ref Node currLeft = ref rootN;
+            if (indRoot >= SIZE_REGION) {
+                currLeft = ref regions[indRoot/SIZE_REGION - 1][indRoot%SIZE_REGION];
+            }
             var currLeft = root.arr[root.ind].left;
             while (currLeft > -1) {
                 var currNode = toLoc(currLeft);
@@ -120,7 +125,6 @@ namespace GCBenchmarkCLR {
                 }
                 currRegion = regions[indCurrRegion];
             }
-            //initNode(ref currRegion[indFree], _a, _b, _c, _d);
             ref Node nd = ref currRegion[indFree];
             nd.left = -1;
             nd.right = -1;
@@ -148,12 +152,6 @@ namespace GCBenchmarkCLR {
             return new Loc { arr = regions[numRegion], ind = offset };
         }
 
-        public void updateLoc(Loc loc, int ind) {
-            var numRegion = ind / SIZE_REGION;
-            var offset = ind % SIZE_REGION;
-            loc.arr = regions[numRegion];
-            loc.ind = offset;
-        }
 
         public struct Node {
             public int left;
@@ -172,7 +170,7 @@ namespace GCBenchmarkCLR {
             }
         }
 
-        public sealed class Loc {
+        public struct Loc {
             public Node[] arr;
             public int ind;
         }
