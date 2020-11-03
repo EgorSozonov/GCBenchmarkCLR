@@ -50,10 +50,8 @@ namespace GCBenchmarkCLR {
                 }
                 if (stack.Count > 0) {
                     bottomElement = stack.Peek();
-                    //var nd = bottomElement.arr[bottomElement.ind];
-                    int newH = height - stack.Count;
                     ref Node nd = ref bottomElement.arr[bottomElement.ind];
-                    nd.right = createLeftTree(newH, _a, _b, _c, _d, stack);
+                    nd.right = createLeftTree(height - stack.Count, _a, _b, _c, _d, stack);
                 }
             }
         }
@@ -61,16 +59,15 @@ namespace GCBenchmarkCLR {
         public int createLeftTree(int height, int _a, int _b, int _c, int _d, Stack<Loc> stack) {
             if (height == 0) return -1;
 
-            var wholeTree = allocateNode(_a, _b, _c, _d);
-            Loc currTree = toLoc(wholeTree);
-            stack.Push(currTree);
+            var globalInd = allocateNode(_a, _b, _c, _d, out Node[] currArr, out int localInd);
+            
+            stack.Push(new Loc { arr = currArr, ind = localInd });
             for (int i = 1; i < height; ++i) {
-                var newTree = allocateNode(_a, _b, _c, _d);
-                currTree.arr[currTree.ind].left = newTree;
-                currTree = toLoc(newTree);
-                stack.Push(currTree);
+                var globalInd1 = allocateNode(_a, _b, _c, _d, out Node[] currArr1, out int localInd1);
+                currArr[localInd1].left = globalInd1;
+                stack.Push(new Loc { arr = currArr1, ind = localInd });
             }
-            return wholeTree;
+            return globalInd;
         }
 
 
@@ -119,7 +116,8 @@ namespace GCBenchmarkCLR {
             }
         }
 
-        public int allocateNode(int _a, int _b, int _c, int _d, out int globalInd) {
+        public int allocateNode(int _a, int _b, int _c, int _d, out Node[] currArr, out int localInd) {
+            int globalInd = 0;
             if (indFree == SIZE_REGION) {
                 ++indCurrRegion;
                 indFree = 0;
@@ -127,6 +125,7 @@ namespace GCBenchmarkCLR {
                     regions.Add(new Node[SIZE_REGION]);
                 }
                 currRegion = regions[indCurrRegion];
+                globalInd = (indCurrRegion + 1) * SIZE_REGION;
             }
             ref Node nd = ref currRegion[indFree];
             nd.left = -1;
@@ -135,10 +134,11 @@ namespace GCBenchmarkCLR {
             nd.b = _b;
             nd.c = _c;
             nd.d = _d;
-            ++indFree;
 
-            globalInd = indCurrRegion * SIZE_REGION + indFree - 1;
-            return (indFree == 1 ? globalInd : indFree);
+            currArr = currRegion;
+            globalInd += indFree;
+            localInd = indFree++;
+            return globalInd;
         }
 
         public static void initNode(ref Node nd, int _a, int _b, int _c, int _d) {
