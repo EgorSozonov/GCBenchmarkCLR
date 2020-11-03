@@ -80,11 +80,13 @@ namespace GCBenchmarkCLR {
                 return -1;
             } else {
                 var stack = new Stack<Loc>(height);
-                processLeftTree(toLoc(0), stack);
+                processLeftTree(regions[0], 0, stack);
                 while (stack.Count > 0) {
                     var bottomElem = stack.Pop();
                     var indRight = bottomElem.arr[bottomElem.ind].right;
-                    if (indRight > -1) processLeftTree(toLoc(indRight), stack);
+                    Node[] currArr = indRight >= SIZE_REGION ? regions[indRight / SIZE_REGION - 1] : bottomElem.arr;
+                    indRight = indRight % SIZE_REGION;
+                    if (indRight > -1) processLeftTree(currArr, indRight, stack);
                 }
             }
             return sum;
@@ -98,25 +100,26 @@ namespace GCBenchmarkCLR {
             sum += rootN.b;
             sum += rootN.c;
             sum += rootN.d;
-
-            ref Node currLeft = ref rootN;
-            if (indRoot >= SIZE_REGION) {
-                currLeft = ref regions[indRoot/SIZE_REGION - 1][indRoot%SIZE_REGION];
-            }
-            var currLeft = root.arr[root.ind].left;
-            while (currLeft > -1) {
-                var currNode = toLoc(currLeft);
-                ref Node nd = ref currNode.arr[root.ind];
+            
+            int leftLink = rootN.left;
+            Node[] currArr = arr;
+            while (leftLink > -1) {
+                if (leftLink >= SIZE_REGION) {
+                    currArr = regions[indRoot / SIZE_REGION - 1];
+                    leftLink = leftLink % SIZE_REGION;
+                }
+                ref Node nd = ref currArr[leftLink];
+                
                 sum += nd.a;
                 sum += nd.b;
                 sum += nd.c;
                 sum += nd.d;
-                stack.Push(currNode);
-                currLeft = currNode.arr[currNode.ind].left;
+                stack.Push(new Loc { arr = currArr, ind = leftLink});
+                leftLink = nd.left;
             }
         }
 
-        public int allocateNode(int _a, int _b, int _c, int _d) {
+        public int allocateNode(int _a, int _b, int _c, int _d, out int globalInd) {
             if (indFree == SIZE_REGION) {
                 ++indCurrRegion;
                 indFree = 0;
@@ -134,7 +137,8 @@ namespace GCBenchmarkCLR {
             nd.d = _d;
             ++indFree;
 
-            return indCurrRegion * SIZE_REGION + indFree - 1;
+            globalInd = indCurrRegion * SIZE_REGION + indFree - 1;
+            return (indFree == 1 ? globalInd : indFree);
         }
 
         public static void initNode(ref Node nd, int _a, int _b, int _c, int _d) {
