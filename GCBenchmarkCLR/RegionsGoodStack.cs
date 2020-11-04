@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 
 namespace GCBenchmarkCLR {
-    public class WithSmartRegions {
+    public class RegionsGoodStack {
         public int height;
         public const int ELTS_IN_REGION = 600000;
         public const int SIZE_PAYLOAD = 4;
@@ -17,7 +17,7 @@ namespace GCBenchmarkCLR {
 
         public int sum;
 
-        public WithSmartRegions(int _height, DateTime tStart) {
+        public RegionsGoodStack(int _height, DateTime tStart) {
             height = _height;
             var numRegions = (int)(Math.Pow(2.0, (double)this.height) - 1) / ELTS_IN_REGION + 1;
             regions = new List<Node[]>(numRegions);
@@ -50,8 +50,10 @@ namespace GCBenchmarkCLR {
                 }
                 if (stack.count > 0) {
                     bottomElement = stack.peek(out int bottomInd1);
+                    //var nd = bottomElement.arr[bottomElement.ind];
+                    int newH = height - stack.count;
                     ref Node nd = ref bottomElement[bottomInd1];
-                    nd.right = createLeftTree(height - stack.count, _a, _b, _c, _d, stack);
+                    nd.right = createLeftTree(newH, _a, _b, _c, _d, stack);
                 }
             }
         }
@@ -59,74 +61,61 @@ namespace GCBenchmarkCLR {
         public int createLeftTree(int height, int _a, int _b, int _c, int _d, SpineStack stack) {
             if (height == 0) return -1;
 
-            var globalInd = allocateNode(_a, _b, _c, _d, out Node[] currArr, out int localInd);
-            stack.push(currArr, localInd);
+            var wholeTree = allocateNode(_a, _b, _c, _d);
+            Node[] currArr = regions[wholeTree / SIZE_REGION];
+            int currInd = wholeTree % SIZE_REGION;
+            stack.push(currArr, currInd);
             for (int i = 1; i < height; ++i) {
+                var newTree = allocateNode(_a, _b, _c, _d);
+                currArr[currInd].left = newTree;
                 
-                var globalInd1 = allocateNode(_a, _b, _c, _d, out Node[] currArr1, out int localInd1);
-                currArr[localInd].left = globalInd1;
-                stack.push(currArr1, localInd1);
-                currArr = currArr1;
-                localInd = localInd1;
+                currArr = regions[newTree / SIZE_REGION];
+                currInd = newTree % SIZE_REGION;
+                stack.push(currArr, currInd);
             }
-            return globalInd;
+            return wholeTree;
         }
 
 
         public int processTree() {
-            try {
-                if (indFree == 0) {
-                    Console.WriteLine("Oh noes, the tree is null!");
-                    return -1;
-                } else {
-                    var stack = new SpineStack(height + 1);
-                    processLeftTree(regions[0], 0, stack);
-                    while (stack.count > 0) {
-                        var bottomElem = stack.pop(out int bottomInd);
-                        var indRight = bottomElem[bottomInd].right;
-                        Node[] currArr = indRight >= SIZE_REGION ? regions[indRight / SIZE_REGION - 1] : bottomElem;
-                        indRight = indRight % SIZE_REGION;
-                        if (indRight > -1) processLeftTree(currArr, indRight, stack);
-                        if (sum > 4200000) Console.WriteLine(stack.count);
-
-                    }
+            if (indFree == 0) {
+                Console.WriteLine("Oh noes, the tree is null!");
+                return -1;
+            } else {
+                var stack = new SpineStack(height);
+                processLeftTree(regions[0], 0, stack);
+                while (stack.count > 0) {
+                    var bottomElem = stack.pop(out int bottomInd);
+                    var indRight = bottomElem[bottomInd].right;
+                    var arr = regions[indRight/SIZE_REGION];
+                    if (indRight > -1) processLeftTree(arr, indRight%SIZE_REGION, stack);
                 }
-            } catch (Exception ex) {
-                ;
             }
             return sum;
         }
 
-
-        public void processLeftTree(Node[] arr, int indRoot, SpineStack stack) {
-
-            stack.push(arr, indRoot);
-            ref Node rootN = ref arr[indRoot];
+        public void processLeftTree(Node[] arr, int ind, SpineStack stack) {
+            stack.push(arr, ind);
+            ref Node rootN = ref arr[ind];
             sum += rootN.a;
             sum += rootN.b;
             sum += rootN.c;
             sum += rootN.d;
-            
-            int leftLink = rootN.left;
-            Node[] currArr = arr;
-            while (leftLink > -1) {
-                if (leftLink >= SIZE_REGION) {
-                    currArr = regions[leftLink / SIZE_REGION - 1];
-                    leftLink = leftLink % SIZE_REGION;
-                }
-                ref Node nd = ref currArr[leftLink];
-                
+
+            var currLeft = arr[ind].left;
+            while (currLeft > -1) {
+                var currNode = toLoc(currLeft);
+                ref Node nd = ref currNode.arr[ind];
                 sum += nd.a;
                 sum += nd.b;
                 sum += nd.c;
                 sum += nd.d;
-                stack.push(currArr, leftLink);
-                leftLink = nd.left;
+                stack.push(currNode.arr, currNode.ind);
+                currLeft = currNode.arr[currNode.ind].left;
             }
         }
 
-        public int allocateNode(int _a, int _b, int _c, int _d, out Node[] currArr, out int localInd) {
-            int globalInd = 0;
+        public int allocateNode(int _a, int _b, int _c, int _d) {
             if (indFree == SIZE_REGION) {
                 ++indCurrRegion;
                 indFree = 0;
@@ -134,8 +123,8 @@ namespace GCBenchmarkCLR {
                     regions.Add(new Node[SIZE_REGION]);
                 }
                 currRegion = regions[indCurrRegion];
-                globalInd = (indCurrRegion + 1) * SIZE_REGION;
             }
+            //initNode(ref currRegion[indFree], _a, _b, _c, _d);
             ref Node nd = ref currRegion[indFree];
             nd.left = -1;
             nd.right = -1;
@@ -143,11 +132,9 @@ namespace GCBenchmarkCLR {
             nd.b = _b;
             nd.c = _c;
             nd.d = _d;
+            ++indFree;
 
-            currArr = currRegion;
-            globalInd += indFree;
-            localInd = indFree++;
-            return globalInd;
+            return indCurrRegion * SIZE_REGION + indFree - 1;
         }
 
         public static void initNode(ref Node nd, int _a, int _b, int _c, int _d) {
@@ -165,6 +152,12 @@ namespace GCBenchmarkCLR {
             return new Loc { arr = regions[numRegion], ind = offset };
         }
 
+        public void updateLoc(Loc loc, int ind) {
+            var numRegion = ind / SIZE_REGION;
+            var offset = ind % SIZE_REGION;
+            loc.arr = regions[numRegion];
+            loc.ind = offset;
+        }
 
         public struct Node {
             public int left;
